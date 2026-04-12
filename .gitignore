@@ -5,3 +5,4 @@ data/model/
 venv/
 dist/
 build/
+data/raw/
