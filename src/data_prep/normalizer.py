@@ -1,6 +1,8 @@
 from importlib_metadata import files
 from pathlib import Path
 from typing import Dict
+from dotenv import load_dotenv
+import os
 import re
 
 class Normalizer:
@@ -34,8 +36,9 @@ class Normalizer:
     @staticmethod
     def strip_gutenberg(text: str):
         """Strip Gutenberg header and footer from text."""
-        reTextStart = re.search(r"\*\*\*\ START OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
-        reTextEnd = re.search(r"\*\*\*\ END OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
+        # reTextStart = re.search(r"\*\*\*\ START OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
+        reTextStart = re.search(r"\*\*\*\ START OF THE PROJECT GUTENBERG EBOOK.*\n?.*\s\*\*\*", text)
+        reTextEnd = re.search(r"\*\*\*\ END OF THE PROJECT GUTENBERG EBOOK.*\n?.*\s\*\*\*", text)
 
         gbStartIndex = reTextStart.span()[1] + 1
         gbEndIndex = reTextEnd.span()[0] - 1
@@ -69,34 +72,68 @@ class Normalizer:
         return text
 
     def sentence_tokenize(self, text: str):
-        """Split text into sentences based on punctuations"""
+        """Split text into sentences based on punctuations and returns a list for each line"""
         newText = self.normalize(text, remPunc=False)
         sentencesList = re.split(r'([,.!?;])', newText)
-        x="\n".join(sentencesList);
-        x = self.normalize(x, remPunc=True)
-        return x
+        sentText="\n".join(sentencesList);
+        sentText = self.normalize(sentText, remPunc=True)
+        sentencesList = re.split(r'\n', sentText)
+        return sentencesList
+    
+    def word_tokenize(sentence):
+        """Split sentence words into tokens"""
+        return re.split(r' ', sentence)
+        # return " ".join(sentence)
+
+    def save(sentences, filepath):
+        """Write tokenized sentences to output file"""
+        sentText="\n".join(sentences);
+        with open(f"{filepath}/train_tokens.txt", "w", encoding="utf-8") as f:
+            f.write(sentText)
+            print(f"Output saved in {filepath}/train_tokens.txt")
+
+     
     
 if __name__ == "__main__":
     # Example usage
-    dataN = Normalizer.load("data/raw/train")
+    load_dotenv(dotenv_path="config/.env")  # Loads variables from .env
+    trainRawDir = os.getenv("TRAIN_RAW_DIR")
+    print(trainRawDir)
+    normalizer = Normalizer(); # Normalizer Instance
+    dataN = Normalizer.load(trainRawDir); # read library
     print(f"Loaded {len(dataN)} files.")
+    trainSntns = list()
+    for bookPath in dataN:
+        bookContent=(dataN[bookPath])
+        print(f"Loaded Book {bookPath} with {len(bookContent)} chars.")
+        newText = Normalizer.strip_gutenberg(bookContent)
+        newText = normalizer.normalize(newText, remPunc=False)
+        bookTokenSntns = normalizer.sentence_tokenize(newText)
+        trainSntns.extend(bookTokenSntns)
+    
+
+
     # print(dataN.keys())
-    y=(dataN['data\\raw\\train\\108.txt'])
-    newText = Normalizer.strip_gutenberg(y)
+    # y=(dataN['data\\raw\\train\\108.txt'])
+    # newText = Normalizer.strip_gutenberg(y)
     # newText = Normalizer.lowercase(newText)
     # newText = Normalizer.remove_punctuation(newText)
     # newText = Normalizer.remove_numbers(newText)
     # newText = Normalizer.remove_whitespace(newText)
     # newText = Normalizer.remove_whitespace(newText)
 
-    normalizer = Normalizer()
+    # normalizer = Normalizer()
     # newText = normalizer.normalize(newText, remPunc=False)
-    newText = normalizer.sentence_tokenize(newText)
+    # newText = normalizer.sentence_tokenize(newText)
+    # Normalizer.save(newText, filepath="data/processed")
+    # print(sentText)
     # print in out file
-    x = "hello"
     # print(newText)
-    with open("demofile.txt", "w", encoding="utf-8") as f:
-        f.write(newText)
+    # with open("demofile.txt", "w", encoding="utf-8") as f:
+    #     f.write(newText)
+    # print(newText[1:5])
+    # print(Normalizer.word_tokenize(newText[1]))
+    # print(Normalizer.word_tokenize(newText[0]))
     # with open("demofile.txt", "w", encoding="utf-8") as f:
     #     for item in newText:
     #         f.write(item)
