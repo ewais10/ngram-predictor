@@ -63,14 +63,18 @@ class Normalizer:
     def remove_whitespace(text: str):
         """Remove blank lines and extra spaces from text."""
         text = re.sub(r'\n\n+', '\n', text); # Remove blank lines
+        text = re.sub(r'\n\s(\w)', r'\n\1', text); # Remove white spaces at the beginning of lines, preserve word char
         text = re.sub(r'[ \t][ \t]+', ' ', text); # Remove extra white spaces
-        text = re.sub(r'\n\s', '\n', text); # Remove white spaces at the beginning of lines
+        text = re.sub(r'\n\s', ' ', text); # Remove white spaces at the beginning of lines per each chapter
         return text
 
-    @staticmethod
-    def sentence_tokenize(text: str):
+    def sentence_tokenize(self, text: str):
         """Split text into sentences based on punctuations"""
-        return re.split(r'([,.!?;])', text)
+        newText = self.normalize(text, remPunc=False)
+        sentencesList = re.split(r'([,.!?;])', newText)
+        x="\n".join(sentencesList);
+        x = self.normalize(x, remPunc=True)
+        return x
     
 if __name__ == "__main__":
     # Example usage
@@ -84,10 +88,10 @@ if __name__ == "__main__":
     # newText = Normalizer.remove_numbers(newText)
     # newText = Normalizer.remove_whitespace(newText)
     # newText = Normalizer.remove_whitespace(newText)
-    # newText = Normalizer.sentence_tokenize(newText)
 
     normalizer = Normalizer()
-    newText = normalizer.normalize(newText, remPunc=False)
+    # newText = normalizer.normalize(newText, remPunc=False)
+    newText = normalizer.sentence_tokenize(newText)
     # print in out file
     x = "hello"
     # print(newText)
