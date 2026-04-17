@@ -28,8 +28,8 @@ class Normalizer:
     
     def strip_gutenberg(text: str):
         """Strip Gutenberg header and footer from text."""
-        reTextStart = re.search("\*\*\*\ START OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
-        reTextEnd = re.search("\*\*\*\ END OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
+        reTextStart = re.search(r"\*\*\*\ START OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
+        reTextEnd = re.search(r"\*\*\*\ END OF THE PROJECT GUTENBERG EBOOK.*\*\*\*", text)
 
         gbStartIndex = reTextStart.span()[1] + 1
         gbEndIndex = reTextEnd.span()[0] - 1
@@ -46,32 +46,29 @@ class Normalizer:
         """Remove punctuation from text."""
         return re.sub(r'[^\w\s]', '', text)
 
-    # def strip_gutenberg(text):
-    #     """Strip Gutenberg header and footer from text."""
-    #     if text is None:
-    #         return ""
-    #     lines = text.splitlines()
-    #     start_idx = 0
-    #     end_idx = len(lines)
-    #     for i, line in enumerate(lines):
-    #         if line.startswith("*** START OF THIS PROJECT GUTENBERG EBOOK"):
-    #             start_idx = i + 1
-    #             break
-    #     for i in range(len(lines)-1, -1, -1):
-    #         if lines[i].startswith("*** END OF THIS PROJECT GUTENBERG EBOOK"):
-    #             end_idx = i
-    #             break
-    #     return "\n".join(lines[start_idx:end_idx])
+    def remove_numbers(text: str):
+        """Remove numbers from text."""
+        return re.sub(r'\d', '', text)
+
+    def remove_whitespace(text: str):
+        """Remove blank lines and extra spaces from text."""
+        text = re.sub(r'\n\n+', '\n', text); # Remove blank lines
+        text = re.sub(r'[ \t][ \t]+', ' ', text); # Remove extra white spaces
+        text = re.sub(r'\n\s', '\n', text); # Remove white spaces at the beginning of lines
+        return text
 
 if __name__ == "__main__":
     # Example usage
     dataN = Normalizer.load("data/raw/train")
     print(f"Loaded {len(dataN)} files.")
-    print(dataN.keys())
+    # print(dataN.keys())
     y=(dataN['data\\raw\\train\\108.txt'])
     newText = Normalizer.strip_gutenberg(y)
     newText = Normalizer.lowercase(newText)
     newText = Normalizer.remove_punctuation(newText)
+    newText = Normalizer.remove_numbers(newText)
+    newText = Normalizer.remove_whitespace(newText)
+
     # print in out file
     x = "hello"
     with open("demofile.txt", "w", encoding="utf-8") as f:
