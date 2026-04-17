@@ -34,9 +34,17 @@ class Normalizer:
         gbStartIndex = reTextStart.span()[1] + 1
         gbEndIndex = reTextEnd.span()[0] - 1
 
-        print(f"Gutenberg header ends at index: {gbStartIndex} and footer starts at index: {gbEndIndex}")
+        # print(f"Gutenberg header ends at index: {gbStartIndex} and footer starts at index: {gbEndIndex}"); ## For debugging
         text = text[gbStartIndex:gbEndIndex]
         return text;
+
+    def lowercase(text: str):
+        """Convert text to lowercase."""
+        return text.lower();
+
+    def remove_punctuation(text: str):
+        """Remove punctuation from text."""
+        return re.sub(r'[^\w\s]', '', text)
 
     # def strip_gutenberg(text):
     #     """Strip Gutenberg header and footer from text."""
@@ -62,6 +70,12 @@ if __name__ == "__main__":
     print(dataN.keys())
     y=(dataN['data\\raw\\train\\108.txt'])
     newText = Normalizer.strip_gutenberg(y)
-    print(newText)
+    newText = Normalizer.lowercase(newText)
+    newText = Normalizer.remove_punctuation(newText)
+    # print in out file
+    x = "hello"
+    with open("demofile.txt", "w", encoding="utf-8") as f:
+        f.write(str(newText))
+    # print(newText)
     # print(Normalizer.__doc__)
     # # help(Normalizer.load)
