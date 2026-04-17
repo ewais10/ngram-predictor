@@ -88,9 +88,9 @@ class Normalizer:
     def save(sentences, filepath):
         """Write tokenized sentences to output file"""
         sentText="\n".join(sentences);
-        with open(f"{filepath}/train_tokens.txt", "w", encoding="utf-8") as f:
+        with open(f"{filepath}", "w", encoding="utf-8") as f:
             f.write(sentText)
-            print(f"Output saved in {filepath}/train_tokens.txt")
+            print(f"Output saved in {filepath}")
 
      
     
@@ -98,6 +98,8 @@ if __name__ == "__main__":
     # Example usage
     load_dotenv(dotenv_path="config/.env")  # Loads variables from .env
     trainRawDir = os.getenv("TRAIN_RAW_DIR")
+    trainTokens = os.getenv("TRAIN_TOKENS")
+
     print(trainRawDir)
     normalizer = Normalizer(); # Normalizer Instance
     dataN = Normalizer.load(trainRawDir); # read library
@@ -110,6 +112,8 @@ if __name__ == "__main__":
         newText = normalizer.normalize(newText, remPunc=False)
         bookTokenSntns = normalizer.sentence_tokenize(newText)
         trainSntns.extend(bookTokenSntns)
+    
+    Normalizer.save(trainSntns, filepath=trainTokens)
     
 
 
