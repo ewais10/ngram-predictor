@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import re
 import json
+
 # import Normalizer
 
 class NGramModel:
@@ -79,7 +80,7 @@ class NGramModel:
         myDict = {}
         wordsCountDict = {}
         myDict["1gram"] = {}
-        myDict["2gram"] = {}
+        # myDict["2gram"] = {}
         # myDict["chink"] = 5; word = "chink"
         line = 0;
         self.wordTokens = ["the", "and", "watson", "sherlock", "holmes", "unite", "UNK"]
@@ -90,7 +91,6 @@ class NGramModel:
             # wordCount = sentTokensText.count(word)
             if line % 100 == 0: print(f"Processed {line} unique tokens out of {len(self.wordTokens)}...");
             if line == 500: break; ## limit to 1000 unique tokens for demo
-
             line = line + 1
             wordCount = len(re.findall(fr'\b{word}\b', sentTokensText))
             # print(wordCount)
@@ -99,55 +99,68 @@ class NGramModel:
             if wordProbability > 0:
                 myDict["1gram"][word] = wordProbability
 
+
+# for word, prob in myDict["1gram"].items():
+        gramIndex = 2
         n_1Grams = list(myDict["1gram"].keys())
         print(f"Total 1-grams with non-zero probability: {len(n_1Grams)}")
-        
-        for word in n_1Grams:
-            # wordMatch = re.findall(fr'\b{word}\s\w+\b', sentTokensText); ## matches new lines also
-            wordMatch = re.findall(fr'\b{word}[ \t]\w+\b', sentTokensText)
-            wordMatchSet = set(wordMatch)
-            # print(wordMatchSet)
-            print(len(wordMatch))
-            print(len(wordMatchSet))
-            for twoGramWord in wordMatchSet:
-            # for twoGramWord in {"holmes drew"}:
-                print(f"Match: '{twoGramWord}'")
-                # myDict["2gram"][twoGramWord] = {}
-                twoGramWordCount = wordMatch.count(twoGramWord)
-                matchProbability = twoGramWordCount / wordsCountDict[word]
-                wordsCountDict[twoGramWord] = twoGramWordCount
-                subWordMatches = re.findall(fr'\b{twoGramWord}[ \t]\w+\b', sentTokensText)
-                if subWordMatches:
-                    # print(f"Sub-matches for '{twoGramWord}': {len(subWordMatches)}")
-                    subWordMatchSet = set(subWordMatches)
-                    # print(subWordMatchSet)
-                    # print(len(subWordMatchSet))
-                    for subWordMatch in subWordMatchSet:
-                        print(f"Sub-match: '{subWordMatch}'")
-                        subWordCount = subWordMatches.count(subWordMatch)
-                        wordsCountDict[subWordMatch] = subWordCount
-                        subWordProb = subWordCount / twoGramWordCount
-                        subWord = subWordMatch.split(" ")[-1]
-                        # myDict.setdefault("2gram", {})[twoGramWord] = matchProbability
-                        # myDict.setdefault("2gram", {})[subWordMatch] = subWordProb
-                        # myDict["2gram"].setdefault(twoGramWord, {})
-                        # myDict["2gram"][twoGramWord] = {} 
-                        # myDict["2gram"][twoGramWord][subWord] = subWordProb
-                        # myDict["2gram"][twoGramWord] = {subWord: subWordProb}
-                        if twoGramWord not in myDict["2gram"]:
-                            myDict["2gram"][twoGramWord] = {}
-                        # if not isinstance(myDict.get("2gram", {}).get(twoGramWord), dict): 
-                            # print("hello")
-                            # myDict["2gram"][twoGramWord] = {}
-                        myDict["2gram"][twoGramWord].update({subWord: subWordProb})
-
-                        print(f"Sub-match count for '{subWordMatch}': {subWordCount}")
-
-                    # subWordMatchCount = subWordMatch.count(subWordMatch)
-                
-                    
 
 
+        ## build 2-grams and their probabilities
+        for gramIndex in range(2, ngramOrder + 1):
+            n_1Grams = list(myDict[f"{gramIndex-1}gram"].keys())
+            if f"{gramIndex}gram" not in myDict:
+                myDict[f"{gramIndex}gram"] = {}
+            print(f"Processing the {gramIndex}-gram")
+            lineWord = 0;
+            for word in n_1Grams:
+                if lineWord % 100 == 0: print(f"Processing the {gramIndex}-gram for word: '{word}' processed {lineWord} out of {len(n_1Grams)} unique {gramIndex-1}-grams ...")
+                lineWord = lineWord + 1
+                # wordMatch = re.findall(fr'\b{word}\s\w+\b', sentTokensText); ## matches new lines also
+                wordMatch = re.findall(fr'\b{word}[ \t]\w+\b', sentTokensText)
+                wordMatchSet = set(wordMatch)
+                # print(wordMatchSet)
+                # print(len(wordMatch))
+                # print(len(wordMatchSet))
+                lineGram = 0
+                for twoGramWord in wordMatchSet:
+                # for twoGramWord in {"holmes drew"}:
+                    if lineGram % 100 == 0: print(f"Processed {gramIndex}-gram for {lineGram} matches out of {len(wordMatchSet)}...");
+                    lineGram = lineGram + 1
+                    # print(f"Processing 2-gram: '{twoGramWord}'")
+                    # if line % 100 == 0: print(f"Processed {line} unique tokens out of {len(self.wordTokens)}...");
+                    # myDict["2gram"][twoGramWord] = {}
+                    twoGramWordCount = wordMatch.count(twoGramWord)
+                    matchProbability = twoGramWordCount / wordsCountDict[word]
+                    wordsCountDict[twoGramWord] = twoGramWordCount
+                    subWordMatches = re.findall(fr'\b{twoGramWord}[ \t]\w+\b', sentTokensText)
+                    if subWordMatches:
+                        # print(f"Sub-matches for '{twoGramWord}': {len(subWordMatches)}")
+                        subWordMatchSet = set(subWordMatches)
+                        # print(subWordMatchSet)
+                        # print(len(subWordMatchSet))
+                        for subWordMatch in subWordMatchSet:
+                            # print(f"Sub-match: '{subWordMatch}'")
+                            subWordCount = subWordMatches.count(subWordMatch)
+                            wordsCountDict[subWordMatch] = subWordCount
+                            subWordProb = subWordCount / twoGramWordCount
+                            subWord = subWordMatch.split(" ")[-1]
+                            # myDict.setdefault("2gram", {})[twoGramWord] = matchProbability
+                            # myDict.setdefault("2gram", {})[subWordMatch] = subWordProb
+                            # myDict["2gram"].setdefault(twoGramWord, {})
+                            # myDict["2gram"][twoGramWord] = {} 
+                            # myDict["2gram"][twoGramWord][subWord] = subWordProb
+                            # myDict["2gram"][twoGramWord] = {subWord: subWordProb}
+                            if twoGramWord not in myDict[f"{gramIndex}gram"]:
+                                myDict[f"{gramIndex}gram"][twoGramWord] = {}
+                            # if not isinstance(myDict.get("{gramIndex}gram", {}).get(twoGramWord), dict): 
+                                # print("hello")
+                                # myDict["{gramIndex}gram"][twoGramWord] = {}
+                            myDict[f"{gramIndex}gram"][twoGramWord].update({subWord: subWordProb})
+                            # print(f"Sub-match count for '{subWordMatch}': {subWordCount}")
+
+                        # subWordMatchCount = subWordMatch.count(subWordMatch)
+            
         with open('data.json', 'w') as fjson:
             json.dump(myDict, fjson, indent=4)
         # print(myDict[word])
