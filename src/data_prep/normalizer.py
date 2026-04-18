@@ -55,6 +55,7 @@ class Normalizer:
     @staticmethod
     def remove_punctuation(text: str):
         """Remove punctuation from text."""
+        text =re.sub(r'[-_]', '', text)
         return re.sub(r'[^\w\s]', '', text)
 
     @staticmethod
