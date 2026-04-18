@@ -3,6 +3,7 @@ from typing import List
 from dotenv import load_dotenv
 import os
 import re
+import json
 # import Normalizer
 
 class NGramModel:
@@ -53,9 +54,104 @@ class NGramModel:
                 newWordTokensSet.add("UNK")
         # wordTokensSet = set(wordTokens)
         newWordTokensText = "\n".join(newWordTokensSet)
+        self.wordTokens = newWordTokensSet
         return newWordTokensText
         # print(sentTokens)
     
+    def build_counts_and_probabilities(self, tokenFile="hello.txt", encoding="utf-8", ngramOrder=4, wordTokenFile="tmpWordTokens.txt"):
+        """build n-gram counts and probabilities."""
+        ##################################################
+        with open(wordTokenFile, "r", encoding="utf-8") as f:
+            wordTokensText = f.readlines()    
+        wordTokensText = "".join(wordTokensText); ## string
+        wordTokensText = re.sub(r'\n', ' ', wordTokensText)
+        self.wordTokens = wordTokensText.split(" ")
+        ###################################################
+        with open(tokenFile, "r", encoding="utf-8") as myTokenFile:
+            sentTokens = myTokenFile.readlines(); ## list
+        sentTokensText = "".join(sentTokens); ## string
+        ###################################################
+
+
+        print(len(self.wordTokens))
+        totalWordsCount = len(re.findall(fr'\b\w+\b', sentTokensText))
+        # print(f"Total words count: {totalWordsCount}")
+        myDict = {}
+        wordsCountDict = {}
+        myDict["1gram"] = {}
+        myDict["2gram"] = {}
+        # myDict["chink"] = 5; word = "chink"
+        line = 0;
+        self.wordTokens = ["the", "and", "watson", "sherlock", "holmes", "unite", "UNK"]
+        self.wordTokens = ["holmes", "and"]
+        self.wordTokens = ["holmes"]
+
+        for word in self.wordTokens:
+            # wordCount = sentTokensText.count(word)
+            if line % 100 == 0: print(f"Processed {line} unique tokens out of {len(self.wordTokens)}...");
+            if line == 500: break; ## limit to 1000 unique tokens for demo
+
+            line = line + 1
+            wordCount = len(re.findall(fr'\b{word}\b', sentTokensText))
+            # print(wordCount)
+            wordProbability = wordCount / totalWordsCount
+            wordsCountDict[word] = wordCount
+            if wordProbability > 0:
+                myDict["1gram"][word] = wordProbability
+
+        n_1Grams = list(myDict["1gram"].keys())
+        print(f"Total 1-grams with non-zero probability: {len(n_1Grams)}")
+        
+        for word in n_1Grams:
+            # wordMatch = re.findall(fr'\b{word}\s\w+\b', sentTokensText); ## matches new lines also
+            wordMatch = re.findall(fr'\b{word}[ \t]\w+\b', sentTokensText)
+            wordMatchSet = set(wordMatch)
+            # print(wordMatchSet)
+            print(len(wordMatch))
+            print(len(wordMatchSet))
+            for twoGramWord in wordMatchSet:
+            # for twoGramWord in {"holmes drew"}:
+                print(f"Match: '{twoGramWord}'")
+                # myDict["2gram"][twoGramWord] = {}
+                twoGramWordCount = wordMatch.count(twoGramWord)
+                matchProbability = twoGramWordCount / wordsCountDict[word]
+                wordsCountDict[twoGramWord] = twoGramWordCount
+                subWordMatches = re.findall(fr'\b{twoGramWord}[ \t]\w+\b', sentTokensText)
+                if subWordMatches:
+                    # print(f"Sub-matches for '{twoGramWord}': {len(subWordMatches)}")
+                    subWordMatchSet = set(subWordMatches)
+                    # print(subWordMatchSet)
+                    # print(len(subWordMatchSet))
+                    for subWordMatch in subWordMatchSet:
+                        print(f"Sub-match: '{subWordMatch}'")
+                        subWordCount = subWordMatches.count(subWordMatch)
+                        wordsCountDict[subWordMatch] = subWordCount
+                        subWordProb = subWordCount / twoGramWordCount
+                        subWord = subWordMatch.split(" ")[-1]
+                        # myDict.setdefault("2gram", {})[twoGramWord] = matchProbability
+                        # myDict.setdefault("2gram", {})[subWordMatch] = subWordProb
+                        # myDict["2gram"].setdefault(twoGramWord, {})
+                        # myDict["2gram"][twoGramWord] = {} 
+                        # myDict["2gram"][twoGramWord][subWord] = subWordProb
+                        # myDict["2gram"][twoGramWord] = {subWord: subWordProb}
+                        if twoGramWord not in myDict["2gram"]:
+                            myDict["2gram"][twoGramWord] = {}
+                        # if not isinstance(myDict.get("2gram", {}).get(twoGramWord), dict): 
+                            # print("hello")
+                            # myDict["2gram"][twoGramWord] = {}
+                        myDict["2gram"][twoGramWord].update({subWord: subWordProb})
+
+                        print(f"Sub-match count for '{subWordMatch}': {subWordCount}")
+
+                    # subWordMatchCount = subWordMatch.count(subWordMatch)
+                
+                    
+
+
+        with open('data.json', 'w') as fjson:
+            json.dump(myDict, fjson, indent=4)
+        # print(myDict[word])
+        pass
 
 if __name__ == "__main__":
     load_dotenv(dotenv_path="config/.env")  # Loads variables from .env
@@ -64,7 +160,10 @@ if __name__ == "__main__":
 
 
     ngr = NGramModel();
-    demoVocab = ngr.build_vocab(unkThreshold=3, filename=trainTokens)
+    # demoVocab = ngr.build_vocab(unkThreshold=3, filename=trainTokens)
+    # with open("tmpWordTokens.txt", "w", encoding="utf-8") as f:
+    #     f.write(demoVocab)
+    demoCounts = ngr.build_counts_and_probabilities(tokenFile=trainTokens, ngramOrder=4)
     # print(demoVocab)
-    with open("demofile.txt", "w", encoding="utf-8") as f:
-        f.write(demoVocab)
+    # with open("demofile.txt", "w", encoding="utf-8") as f:
+    #     f.write(demoCounts)
