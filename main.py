@@ -12,6 +12,15 @@ def main():
     parser.add_argument("--version", action="store_true", help="Show version")
     parser.add_argument("--step", type=str,  default="default", help="The step to run")
 
+    # Load the tokenized sentences
+    load_dotenv(dotenv_path="config/.env")  # Loads variables from .env
+    trainTokens = os.getenv("TRAIN_TOKENS")
+    unkThreshold = int(os.getenv("UNK_THRESHOLD"))
+    modelFile = os.getenv("MODELF")
+    vocabFile = os.getenv("VOCAB")
+    ngramOrder = int(os.getenv("NGRAM_ORDER"))
+
+    # print(type(unkThreshold))
     args = parser.parse_args()
 
     print("Welcome to the N-gram Predictor!")
@@ -42,6 +51,14 @@ def main():
         trainSntns = trainSntns[100:201] # for testing purposes, remove this line for full dataset
         Normalizer.save(trainSntns, filepath=trainTokens)
     
-
+    if args.step == "model":
+        print("Running model training...")
+        ngr = NGramModel();
+        demoVocab = ngr.build_vocab(unkThreshold=unkThreshold, filename=trainTokens)
+        ngr.save_vocab(vocabFile)
+        demoCounts = ngr.build_counts_and_probabilities(tokenFile=trainTokens, ngramOrder=ngramOrder)
+        ngr.save_model(modelFile)
+        print("Model trained successfully!")
+        
 if __name__ == "__main__":
     main()
