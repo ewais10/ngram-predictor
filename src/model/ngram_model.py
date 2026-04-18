@@ -106,7 +106,7 @@ class NGramModel:
                 wordProbability = wordCount / totalWordsCount
             self.wordsCountDict[word] = wordCount
             # print(f"Token: '{word}' Count: {wordCount} Probability: {wordProbability}")
-            if wordProbability > 0.001:
+            if wordProbability > 0:
                 self.myDict["1gram"][word] = wordProbability
 
 
@@ -178,7 +178,7 @@ class NGramModel:
         # print(self.myDict[word])
         pass
 
-    def lookup(self, context: str) -> dict[str, float]:
+    def lookup(self, context: str, topK: int=3) -> dict[str, float]:
         """Given a context (list of preceding words), return a dictionary of next-word probabilities."""
         contextList = context.split(" ")
         ngramMaxWght = len(self.myDict.keys());
@@ -210,8 +210,8 @@ class NGramModel:
         ########################################################
         # print(f"Looking up context: '{context}'")
         probDict = {}; ## Output dictionary of next-word probabilities
-        while contextLength > 0 and len(probDict)<3:
-            print(f"Looking up context: '{contextList}' with length {contextLength} and predicted words length is {len(probDict)}.")
+        while contextLength > 0 and len(probDict)<topK:
+            # print(f"Looking up context: '{contextList}' with length {contextLength} and predicted words length is {len(probDict)}.")
             ## start of lookup phase
             ngramDict = self.myDict.get(f"{contextLength}gram", {})
             myText = " ".join(contextList)
@@ -221,11 +221,11 @@ class NGramModel:
                 # print(ngramDict[myText])
                 if contextLength == 1:
                     ngramDict = self.myDict.get(f"{contextLength+1}gram", {})
-                    print(str(ngramDict.keys()))
+                    # print(str(ngramDict.keys()))
                     x= re.findall(fr'\b{myText}[ \t]\w+\b', str(ngramDict.keys()))
                     second_words = [phrase.split()[1] for phrase in x]
-                    print(f"Found 2-gram matches for '{myText}': {x}")
-                    print(second_words)
+                    # print(f"Found 2-gram matches for '{myText}': {x}")
+                    # print(second_words)
                     maxProb = 0
                     tmpDict = {}
                     for word in second_words:
@@ -236,20 +236,20 @@ class NGramModel:
                     sorted_dict = dict(sorted(tmpDict.items(), key=lambda item: item[1], reverse=True))
                     # print(f"Sorted 1-gram matches for '{myText}': {sorted_dict}")
                     for word, prob in sorted_dict.items():
-                        print(f"Predicted next word: '{word}' with probability {prob}'")
+                        # print(f"Predicted next word: '{word}' with probability {prob}'")
                         if word not in probDict:
                             probDict[word] = prob
-                        if len(probDict) >= 3:
+                        if len(probDict) >= topK:
                             break
                 
                     # print(f"Predicted next word: '{myText}' with probability {ngramDict[myText]}'")
                 else:
                     sorted_dict = dict(sorted(ngramDict[myText].items(), key=lambda item: item[1], reverse=True))
                     for word, prob in sorted_dict.items():
-                        print(f"Predicted next word: '{word}' with probability {prob}'")
+                        # print(f"Predicted next word: '{word}' with probability {prob}'")
                         if word not in probDict:
                             probDict[word] = prob
-                        if len(probDict) >= 3:
+                        if len(probDict) >= topK:
                             break
                 # probDict.update(sorted_dict)
                 # print(probDict)
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     # print(data["1gram"])
     # demoLookup = ngr.lookup(context="Whya are HAMADA you here holmes is")
     # demoLookup = ngr.lookup(context="Whya are HAMADA you here holmes and i had")
-    demoLookup = ngr.lookup(context="holmes unlocked his strongbox")
+    demoLookup = ngr.lookup(context="the window", topK=5)
     print(demoLookup)
     
     # print(demoVocab)
